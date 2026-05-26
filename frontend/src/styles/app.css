@@ -1,0 +1,113 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #121212;
+  color: white;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #181818;
+  padding: 15px 30px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-links a {
+  color: white;
+  margin-left: 20px;
+  text-decoration: none;
+}
+
+.page,
+.form-page {
+  padding: 30px;
+}
+
+.search-box {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.search-box input,
+.form-box input {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  width: 250px;
+}
+
+.search-box button,
+.form-box button,
+.song-card button,
+.logout-btn {
+  padding: 10px 16px;
+  background: #1db954;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.songs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.song-card {
+  background: #1e1e1e;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.song-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.player-bar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #181818;
+  padding: 15px;
+  border-top: 1px solid #333;
+}
+
+.form-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 320px;
+}
+
+.welcome-text {
+  margin-left: 16px;
+  margin-right: 10px;
+  color: #1db954;
+  font-size: 14px;
+}
+
+.playlist-list {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.playlist-card {
+  background: #1e1e1e;
+  padding: 18px;
+  border-radius: 12px;
+}
