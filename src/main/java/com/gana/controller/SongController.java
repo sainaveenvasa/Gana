@@ -2,6 +2,7 @@ package com.gana.controller;
 
 import com.gana.dto.SongRequest;
 import com.gana.entity.Song;
+import com.gana.exception.BadRequestException;
 import com.gana.service.SongService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,9 @@ public class SongController {
 
     @GetMapping("/search")
     public List<Song> searchSongs(@RequestParam String keyword) {
-        return songService.searchSongs(keyword);
+        if (keyword.isBlank() || keyword.length() > 100) {
+            throw new BadRequestException("keyword must be 1-100 characters");
+        }
+        return songService.searchSongs(keyword.trim());
     }
 }

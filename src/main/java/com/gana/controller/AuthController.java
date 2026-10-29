@@ -4,6 +4,7 @@ import com.gana.dto.AuthResponse;
 import com.gana.dto.LoginRequest;
 import com.gana.dto.RegisterRequest;
 import com.gana.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+    public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        // getRemoteAddr() rather than X-Forwarded-For, which clients can spoof.
+        return authService.login(request, httpRequest.getRemoteAddr());
     }
 }

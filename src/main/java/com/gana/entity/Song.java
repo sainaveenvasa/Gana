@@ -1,5 +1,6 @@
 package com.gana.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,6 +31,8 @@ public class Song {
 
     private Integer duration;
 
+    // Internal storage detail; clients stream via /api/stream/{id}.
+    @JsonIgnore
     @Column(nullable = false)
     private String filePath;
 

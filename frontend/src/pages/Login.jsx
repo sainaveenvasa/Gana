@@ -22,7 +22,7 @@ function Login() {
       alert(response.data.message);
       navigate("/");
     } catch (error) {
-      alert("Login failed");
+      alert(error?.response?.data?.message || "Login failed");
       console.error(error);
     }
   };
@@ -42,6 +42,7 @@ function Login() {
           type="password"
           name="password"
           placeholder="Enter password"
+          autoComplete="current-password"
           value={form.password}
           onChange={handleChange}
         />

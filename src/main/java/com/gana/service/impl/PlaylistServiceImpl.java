@@ -6,12 +6,16 @@ import com.gana.entity.Playlist;
 import com.gana.entity.PlaylistSong;
 import com.gana.entity.Song;
 import com.gana.entity.User;
+import com.gana.exception.ResourceNotFoundException;
+import com.gana.exception.UnauthorizedActionException;
 import com.gana.repository.PlaylistRepository;
 import com.gana.repository.PlaylistSongRepository;
 import com.gana.repository.SongRepository;
 import com.gana.repository.UserRepository;
 import com.gana.service.PlaylistService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,11 +31,10 @@ public class PlaylistServiceImpl implements PlaylistService {
 
     @Override
     public Playlist createPlaylist(PlaylistRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = currentUser();
 
         Playlist playlist = Playlist.builder()
-                .name(request.getName())
+                .name(request.getName().trim())
                 .description(request.getDescription())
                 .user(user)
                 .build();
@@ -40,20 +43,17 @@ public class PlaylistServiceImpl implements PlaylistService {
     }
 
     @Override
-    public List<Playlist> getPlaylistsByUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return playlistRepository.findByUser(user);
+    public List<Playlist> getMyPlaylists() {
+        return playlistRepository.findByUser(currentUser());
     }
 
     @Override
     public PlaylistSong addSongToPlaylist(AddSongToPlaylistRequest request) {
-        Playlist playlist = playlistRepository.findById(request.getPlaylistId())
-                .orElseThrow(() -> new RuntimeException("Playlist not found"));
+        Playlist playlist = findOwnedPlaylist(request.getPlaylistId());
 
         Song song = songRepository.findById(request.getSongId())
-                .orElseThrow(() -> new RuntimeException("Song not found"));
+                .filter(Song::getActive)
+                .orElseThrow(() -> new ResourceNotFoundException("Song not found"));
 
         PlaylistSong playlistSong = PlaylistSong.builder()
                 .playlist(playlist)
@@ -65,9 +65,25 @@ public class PlaylistServiceImpl implements PlaylistService {
 
     @Override
     public List<PlaylistSong> getSongsByPlaylist(Long playlistId) {
-        Playlist playlist = playlistRepository.findById(playlistId)
-                .orElseThrow(() -> new RuntimeException("Playlist not found"));
+        return playlistSongRepository.findByPlaylist(findOwnedPlaylist(playlistId));
+    }
 
-        return playlistSongRepository.findByPlaylist(playlist);
+    private Playlist findOwnedPlaylist(Long playlistId) {
+        Playlist playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new ResourceNotFoundException("Playlist not found"));
+
+        if (!playlist.getUser().getId().equals(currentUser().getId())) {
+            throw new UnauthorizedActionException("You do not have access to this playlist");
+        }
+        return playlist;
+    }
+
+    private User currentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new UnauthorizedActionException("Authentication required");
+        }
+        return userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new UnauthorizedActionException("Authentication required"));
     }
 }

@@ -23,9 +23,9 @@ public class PlaylistController {
         return playlistService.createPlaylist(request);
     }
 
-    @GetMapping("/user/{userId}")
-    public List<Playlist> getPlaylistsByUser(@PathVariable Long userId) {
-        return playlistService.getPlaylistsByUser(userId);
+    @GetMapping
+    public List<Playlist> getMyPlaylists() {
+        return playlistService.getMyPlaylists();
     }
 
     @PostMapping("/add-song")

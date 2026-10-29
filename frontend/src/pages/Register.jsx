@@ -22,7 +22,7 @@ function Register() {
       alert(response.data.message);
       navigate("/login");
     } catch (error) {
-      alert("Registration failed");
+      alert(error?.response?.data?.message || "Registration failed");
       console.error(error);
     }
   };
@@ -48,7 +48,11 @@ function Register() {
         <input
           type="password"
           name="password"
-          placeholder="Enter password"
+          placeholder="Password (8+ chars, letters and numbers)"
+          minLength={8}
+          maxLength={72}
+          autoComplete="new-password"
+          required
           value={form.password}
           onChange={handleChange}
         />

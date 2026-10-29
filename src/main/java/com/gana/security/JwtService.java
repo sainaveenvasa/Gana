@@ -34,8 +34,12 @@ public class JwtService {
             @Value("${app.jwt.expiration-ms}") long expirationMs,
             @Value("${app.jwt.issuer}") String issuer
     ) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("app.jwt.secret (JWT_SECRET) must be set");
+        }
         // Accept either a base64-encoded secret or a raw UTF-8 string that is
-        // long enough (>= 32 bytes) to satisfy HS256.
+        // long enough (>= 32 bytes) to satisfy HS256. Shorter keys are
+        // rejected by Keys.hmacShaKeyFor at startup.
         byte[] keyBytes;
         try {
             keyBytes = Decoders.BASE64.decode(secret);
@@ -107,6 +111,7 @@ public class JwtService {
     private Claims parseAllClaims(String token) {
         Jws<Claims> jws = Jwts.parser()
                 .verifyWith(signingKey)
+                .requireIssuer(issuer)
                 .build()
                 .parseSignedClaims(token);
         return jws.getPayload();

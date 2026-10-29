@@ -39,11 +39,14 @@ public class SongServiceImpl implements SongService {
     @Override
     public Song getSongById(Long id) {
         return songRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Song not found with id: "));
+                .orElseThrow(() -> new ResourceNotFoundException("Song not found with id: " + id));
     }
 
     @Override
     public List<Song> searchSongs(String keyword) {
-        return songRepository.findByTitleContainingIgnoreCaseOrArtistContainingIgnoreCase(keyword, keyword);
+        return songRepository.findByTitleContainingIgnoreCaseOrArtistContainingIgnoreCase(keyword, keyword)
+                .stream()
+                .filter(Song::getActive)
+                .toList();
     }
 }

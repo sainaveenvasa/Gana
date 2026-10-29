@@ -6,7 +6,6 @@ function Playlists() {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    userId: 1,
   });
 
   useEffect(() => {
@@ -15,7 +14,7 @@ function Playlists() {
 
   const fetchPlaylists = async () => {
     try {
-      const response = await api.get("/api/playlists/user/1");
+      const response = await api.get("/api/playlists");
       setPlaylists(response.data);
     } catch (error) {
       console.error("Error fetching playlists", error);
@@ -30,7 +29,7 @@ function Playlists() {
     e.preventDefault();
     try {
       await api.post("/api/playlists", form);
-      setForm({ name: "", description: "", userId: 1 });
+      setForm({ name: "", description: "" });
       fetchPlaylists();
     } catch (error) {
       console.error("Error creating playlist", error);
@@ -46,6 +45,8 @@ function Playlists() {
           type="text"
           name="name"
           placeholder="Playlist name"
+          maxLength={100}
+          required
           value={form.name}
           onChange={handleChange}
         />
@@ -53,6 +54,7 @@ function Playlists() {
           type="text"
           name="description"
           placeholder="Playlist description"
+          maxLength={500}
           value={form.description}
           onChange={handleChange}
         />
