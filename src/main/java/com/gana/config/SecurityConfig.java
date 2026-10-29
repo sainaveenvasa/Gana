@@ -39,8 +39,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 // Stateless bearer-token API: no cookies, so CSRF does not apply.
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement(session
+                        -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
