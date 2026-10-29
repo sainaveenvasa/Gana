@@ -1,6 +1,7 @@
 package com.gana.service.impl;
 import com.gana.dto.SongRequest;
 import com.gana.entity.Song;
+import com.gana.exception.ResourceNotFoundException;
 import com.gana.repository.SongRepository;
 import com.gana.service.SongService;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,7 @@ public class SongServiceImpl implements SongService {
     @Override
     public Song getSongById(Long id) {
         return songRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Song not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Song not found with id: "));
     }
 
     @Override

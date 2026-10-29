@@ -1,18 +1,22 @@
 package com.gana.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import jakarta.validation.constraints.*;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegisterRequest {
-    @NotBlank
-    private String fullName;
 
-    @Email
-    @NotBlank
+    @NotBlank(message = "Name is required")
+    private String name;
+
+    @Email(message = "Email should be valid")
+    @NotBlank(message = "Email is required")
     private String email;
 
-    @NotBlank
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    @NotBlank(message = "Password is required")
     private String password;
 }

@@ -4,6 +4,7 @@ import com.gana.dto.AuthResponse;
 import com.gana.dto.LoginRequest;
 import com.gana.dto.RegisterRequest;
 import com.gana.entity.Role;
+import com.gana.exception.DuplicateResourceException;
 import com.gana.repository.UserRepository;
 import com.gana.security.JwtService;
 import com.gana.service.AuthService;
@@ -24,7 +25,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new DuplicateResourceException("Email already exists");
         }
 
         com.gana.entity.User user = com.gana.entity.User.builder()
