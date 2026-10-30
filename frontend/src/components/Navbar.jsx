@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../api/api";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -12,7 +13,13 @@ function Navbar() {
     user = null;
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Revoke the token on the server while we can still authenticate.
+      await api.post("/api/auth/logout");
+    } catch (error) {
+      console.warn("Could not revoke token on the server", error);
+    }
     localStorage.removeItem("user");
     navigate("/login");
   };

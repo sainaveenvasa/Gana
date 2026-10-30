@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "users")
@@ -32,6 +33,13 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    // Stored in every JWT; incrementing it revokes all tokens issued so far.
+    // The default lets ddl-auto add this column to a table that already has rows.
+    @Builder.Default
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private int tokenVersion = 0;
 
     public Long getId() {
         return id;
@@ -71,6 +79,14 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public int getTokenVersion() {
+        return tokenVersion;
+    }
+
+    public void setTokenVersion(int tokenVersion) {
+        this.tokenVersion = tokenVersion;
     }
 
     @Override

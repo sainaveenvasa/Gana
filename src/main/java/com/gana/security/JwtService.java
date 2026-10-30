@@ -4,9 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -24,6 +24,8 @@ import java.util.function.Function;
  */
 @Service
 public class JwtService {
+
+    private static final String TOKEN_VERSION_CLAIM = "ver";
 
     private final SecretKey signingKey;
     private final long expirationMs;
@@ -46,7 +48,7 @@ public class JwtService {
             if (keyBytes.length < 32) {
                 keyBytes = secret.getBytes(StandardCharsets.UTF_8);
             }
-        } catch (IllegalArgumentException ex) {
+        } catch (DecodingException | IllegalArgumentException ex) {
             keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         }
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
@@ -54,17 +56,14 @@ public class JwtService {
         this.issuer = issuer;
     }
 
-    /** Generate a token for the given user, with role as a custom claim. */
-    public String generateToken(UserDetails userDetails) {
+    /** Generate a token for the given user, with role and token version as custom claims. */
+    public String generateToken(AppUserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         userDetails.getAuthorities().stream()
                 .findFirst()
                 .ifPresent(a -> claims.put("role", a.getAuthority()));
+        claims.put(TOKEN_VERSION_CLAIM, userDetails.getTokenVersion());
         return buildToken(claims, userDetails.getUsername());
-    }
-
-    public String generateToken(Map<String, Object> extraClaims, String subject) {
-        return buildToken(extraClaims, subject);
     }
 
     private String buildToken(Map<String, Object> claims, String subject) {
@@ -91,10 +90,14 @@ public class JwtService {
         return resolver.apply(parseAllClaims(token));
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
+    public boolean isTokenValid(String token, AppUserDetails userDetails) {
         try {
             String username = extractUsername(token);
-            return username.equals(userDetails.getUsername()) && !isExpired(token);
+            Integer tokenVersion = extractClaim(token, c -> c.get(TOKEN_VERSION_CLAIM, Integer.class));
+            return username.equals(userDetails.getUsername())
+                    && tokenVersion != null
+                    && tokenVersion == userDetails.getTokenVersion()
+                    && !isExpired(token);
         } catch (Exception ex) {
             return false;
         }

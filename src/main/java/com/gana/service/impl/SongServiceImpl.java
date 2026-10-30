@@ -5,6 +5,7 @@ import com.gana.exception.ResourceNotFoundException;
 import com.gana.repository.SongRepository;
 import com.gana.service.SongService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public class SongServiceImpl implements SongService {
     private final SongRepository songRepository;
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public Song addSong(SongRequest request) {
         Song song = Song.builder()
                 .title(request.getTitle())

@@ -1,16 +1,19 @@
 package com.gana.config;
 
+import com.gana.security.AuthRateLimitFilter;
 import com.gana.security.JwtAuthenticationFilter;
 import com.gana.security.RestAccessDeniedHandler;
 import com.gana.security.RestAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,10 +26,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuthRateLimitFilter authRateLimitFilter;
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
 
@@ -45,14 +50,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/jamendo/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/songs/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/stream/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/covers/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/stream/**").authenticated()
                         // Only admins may register new songs (they control file paths on disk).
                         .requestMatchers("/api/songs/**").hasRole("ADMIN")
                         .requestMatchers("/api/playlists/**").authenticated()
-                        .anyRequest().authenticated()
+                        // Fail closed: a new endpoint is unreachable until it gets a rule above.
+                        .anyRequest().denyAll()
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint)
@@ -66,9 +72,26 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(authRateLimitFilter, JwtAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // These filters run inside the security chain. Without the two beans below,
+    // Spring Boot would also register them as ordinary servlet filters.
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration() {
+        FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(jwtAuthenticationFilter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<AuthRateLimitFilter> authRateLimitFilterRegistration() {
+        FilterRegistrationBean<AuthRateLimitFilter> registration = new FilterRegistrationBean<>(authRateLimitFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean

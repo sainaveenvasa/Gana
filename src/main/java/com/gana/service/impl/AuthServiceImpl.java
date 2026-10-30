@@ -4,18 +4,19 @@ import com.gana.dto.AuthResponse;
 import com.gana.dto.LoginRequest;
 import com.gana.dto.RegisterRequest;
 import com.gana.entity.Role;
+import com.gana.exception.BadRequestException;
 import com.gana.exception.DuplicateResourceException;
 import com.gana.exception.InvalidCredentialsException;
 import com.gana.exception.TooManyRequestsException;
 import com.gana.repository.UserRepository;
+import com.gana.security.AppUserDetails;
 import com.gana.security.JwtService;
 import com.gana.security.LoginAttemptService;
 import com.gana.service.AuthService;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -23,6 +24,7 @@ import java.util.Optional;
 public class AuthServiceImpl implements AuthService {
 
     private static final String INVALID_CREDENTIALS = "Invalid email or password";
+    private static final int BCRYPT_MAX_BYTES = 72;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -49,6 +51,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse register(RegisterRequest request) {
         String email = normalizeEmail(request.getEmail());
+
+        // @Size counts characters, but BCrypt's limit is in bytes.
+        if (request.getPassword().getBytes(StandardCharsets.UTF_8).length > BCRYPT_MAX_BYTES) {
+            throw new BadRequestException("Password is too long");
+        }
 
         if (userRepository.existsByEmail(email)) {
             throw new DuplicateResourceException("Email already exists");
@@ -87,14 +94,13 @@ public class AuthServiceImpl implements AuthService {
         return buildAuthResponse("Login successful", user.get());
     }
 
-    private AuthResponse buildAuthResponse(String message, com.gana.entity.User user) {
-        UserDetails userDetails = User.builder()
-                .username(user.getEmail())
-                .password(user.getPassword())
-                .authorities("ROLE_" + user.getRole().name())
-                .build();
+    @Override
+    public void logout(String email) {
+        userRepository.incrementTokenVersion(email);
+    }
 
-        String token = jwtService.generateToken(userDetails);
+    private AuthResponse buildAuthResponse(String message, com.gana.entity.User user) {
+        String token = jwtService.generateToken(new AppUserDetails(user));
 
         return new AuthResponse(
                 message,
